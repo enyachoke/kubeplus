@@ -6,11 +6,11 @@ RUN curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packa
 
 RUN wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz && gunzip kubeplus-kubectl-plugins.tar.gz && tar -xvf kubeplus-kubectl-plugins.tar && cp -r /plugins/* bin/
 
-ADD requirements.txt /root/requirements.txt
-ADD consumerui.py /root/consumerui.py
-ADD grapher.py /root/grapher.py
-ADD templates /root/templates
-ADD static /root/static
+ADD consumerui/requirements.txt /root/requirements.txt
+ADD consumerui/consumerui.py /root/consumerui.py
+ADD consumerui/grapher.py /root/grapher.py
+ADD consumerui/templates /root/templates
+ADD consumerui/static /root/static
 RUN cd /root; pip install -r requirements.txt
 RUN mkdir /root/.kube/
 
