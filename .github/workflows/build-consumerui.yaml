@@ -44,7 +44,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/consumerui
           tags: |
-            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -

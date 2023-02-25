@@ -40,7 +40,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/platform-operator
           tags: |
-            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{env.OPERATOR_VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
       -
         name: Docker helm-pod metadata
@@ -49,7 +49,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/helm-pod
           tags: |
-            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{env.HELMER_VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -
