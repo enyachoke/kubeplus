@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+  release:
+    types: [published, edited]
 
 jobs:
   docker:
@@ -27,7 +29,17 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - 
         name: Set Version
-        run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
+        run: echo "VERSION=$(tail -1 mutating-webhook/versions.txt)" >> $GITHUB_ENV
+      -
+        name: Docker webhook metadata
+        id: pac_mutating_admission_webhook
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/pac-mutating-admission-webhook
+          tags: |
+            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+
       -
         name: Build and push mutating-webhook
         uses: docker/build-push-action@v4
@@ -35,6 +47,5 @@ jobs:
           context: .
           file: mutating-webhook/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/pac-mutating-admission-webhook:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.pac_mutating_admission_webhook.outputs.tags }}

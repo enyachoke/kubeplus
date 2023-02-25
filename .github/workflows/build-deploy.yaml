@@ -5,7 +5,7 @@ on:
     branches:
       - "master"
   release:
-    types: [published, created, edited]
+    types: [published, edited]
 
 jobs:
   docker:
@@ -31,6 +31,11 @@ jobs:
         name: Set Version
         run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
 
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
       -
         name: Docker webhook metadata
         id: webhook_tls_getter
@@ -38,7 +43,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/webhook-tls-getter
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{is_default_branch}}
             type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
       -
         name: Build and push webhook-tls-getter
@@ -57,8 +62,8 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/delete-kubeplus-resources
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'created' }}
 
       -
         name: Build and push delete-kubeplus-resources
@@ -77,7 +82,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/kubeconfiggenerator
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{is_default_branch}}
             type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -

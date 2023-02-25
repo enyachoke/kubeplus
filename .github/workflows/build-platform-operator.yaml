@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+  release:
+    types: [published, edited]
 
 jobs:
   docker:
@@ -26,8 +28,30 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - 
-        name: Set Version
-        run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
+        name: Set Helmer Version
+        run: echo "HELMER_VERSION=$(tail -1 platform-operator/helm-pod/versions.txt)" >> $GITHUB_ENV
+      - 
+        name: Set platform-operator Version
+        run: echo "OPERATOR_VERSION=$(tail -1 platform-operator/versions.txt)" >> $GITHUB_ENV
+      -
+        name: Docker platform-operator metadata
+        id: platform_operator
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/platform-operator
+          tags: |
+            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=${{env.OPERATOR_VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+      -
+        name: Docker helm-pod metadata
+        id: helm_pod
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/helm-pod
+          tags: |
+            type=raw,value=latest,enable=${{is_default_branch}}
+            type=raw,value=${{env.HELMER_VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+
       -
         name: Build and push platform-operator
         uses: docker/build-push-action@v4
@@ -35,9 +59,8 @@ jobs:
           context: .
           file: platform-operator/artifacts/deployment/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/platform-operator:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.platform_operator.outputs.tags }}
       -
         name: Build and push helm pod
         uses: docker/build-push-action@v4
@@ -45,6 +68,5 @@ jobs:
           context: .
           file: platform-operator/helm-pod/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/helm-pod:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.helm_pod.outputs.tags }}
