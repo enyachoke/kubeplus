@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+  release:
+    types: [published, created, edited]
 
 jobs:
   docker:
@@ -28,6 +30,16 @@ jobs:
       - 
         name: Set Version
         run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
+
+      -
+        name: Docker webhook metadata
+        id: webhook_tls_getter
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/webhook-tls-getter
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
       -
         name: Build and push webhook-tls-getter
         uses: docker/build-push-action@v4
@@ -35,9 +47,19 @@ jobs:
           context: .
           file: deploy/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.webhook_tls_getter.outputs.tags }}
+      
+      -
+        name: Docker delete-kubeplus-resources metadata
+        id: delete_kubeplus_resources
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/delete-kubeplus-resources
           tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/webhook-tls-getter:latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+
       -
         name: Build and push delete-kubeplus-resources
         uses: docker/build-push-action@v4
@@ -45,9 +67,19 @@ jobs:
           context: .
           file: deploy/Dockerfile.cleanup
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.delete_kubeplus_resources.outputs.tags }}
+
+      -
+        name: Docker kubeconfiggenerator metadata
+        id: kubeconfiggenerator
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/kubeconfiggenerator
           tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/delete-kubeplus-resources:latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+
       -
         name: Build and push kubeconfiggenerator
         uses: docker/build-push-action@v4
@@ -55,6 +87,5 @@ jobs:
           context: .
           file: deploy/Dockerfile.kubeconfiggenerator
           platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/kubeconfiggenerator:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.kubeconfiggenerator.outputs.tags }}
