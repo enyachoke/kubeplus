@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+    release:
+      types: [published]
 
 jobs:
   docker:
@@ -36,7 +38,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/consumerui
           tags: |
-            type=raw,pattern=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'created' }}
+            type=raw,pattern=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -
         name: Build and push consumerui
