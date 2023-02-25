@@ -31,11 +31,6 @@ jobs:
         name: Set Version
         run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
 
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-
       -
         name: Docker webhook metadata
         id: webhook_tls_getter
@@ -63,7 +58,7 @@ jobs:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/delete-kubeplus-resources
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'created' }}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -
         name: Build and push delete-kubeplus-resources
