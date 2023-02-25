@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - 
         name: Set Version
-        run: echo "VERSION=$(tail -1 deploy/versions.txt)" >> $GITHUB_ENV
+        run: echo "VERSION=$(tail -1 consumerui/versions.txt)" >> $GITHUB_ENV
       -
         name: Docker metadata
         id: consumerui_meta
@@ -38,7 +38,7 @@ jobs:
         with:
           images: ${{ secrets.REGISTRY }}/${{ secrets.REGISTRY_USERNAME }}/consumerui
           tags: |
-            type=raw,pattern=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
+            type=raw,value=${{env.VERSION}},enable=${{ github.event_name == 'release' && github.event.action == 'published' }}
 
       -
         name: Build and push consumerui
